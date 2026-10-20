@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">CardWise</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_wallet">My Cards</string>
+    <string name="nav_matcher">Card Matcher</string>
+    <string name="nav_payments">Payments</string>
+    <string name="nav_rewards">Rewards</string>
+    <string name="nav_settings">Settings</string>
+</resources>

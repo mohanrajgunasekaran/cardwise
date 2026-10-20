@@ -1,0 +1,41 @@
+# Android & Gradle
+.gradle/
+build/
+app/build/
+*.iml
+.idea/
+local.properties
+.DS_Store
+*.keystore
+!debug.keystore
+*.jks
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Python & FastAPI
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite3
+*.db
+.env
+!.env.example
+
+# OS / Editor
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+.vscode/
+*.swp
+*.swo
