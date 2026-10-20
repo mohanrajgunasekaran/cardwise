@@ -21,6 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
 # Mount API Routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Authentication"])
 app.include_router(cards.router, prefix=f"{settings.API_V1_STR}/cards", tags=["Credit Cards"])
@@ -30,6 +34,16 @@ app.include_router(matcher.router, prefix=f"{settings.API_V1_STR}/matcher", tags
 app.include_router(offers.router, prefix=f"{settings.API_V1_STR}/offers", tags=["Offers & Rewards"])
 app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard"])
 
+# Mount static web client assets
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def serve_frontend():
+        return FileResponse(os.path.join(static_dir, "index.html"))
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "CardWise Backend API", "version": settings.VERSION}
+
