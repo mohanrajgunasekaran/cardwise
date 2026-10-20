@@ -1,9 +1,9 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.db.session import get_db
-from app.models.models import User, CreditCard
-from app.schemas.schemas import CardCreate, CardUpdate, CardResponse
+from app.models.models import User, CreditCard, CardProductTerms
+from app.schemas.schemas import CardCreate, CardUpdate, CardResponse, CardProductTermsUpdate, CardProductTermsResponse
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -14,7 +14,11 @@ def list_cards(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(CreditCard).filter(CreditCard.user_id == current_user.id)
+    query = db.query(CreditCard).options(
+        joinedload(CreditCard.product_terms).joinedload(CardProductTerms.source_document),
+        joinedload(CreditCard.benefits),
+        joinedload(CreditCard.fees)
+    ).filter(CreditCard.user_id == current_user.id)
     if not include_archived:
         query = query.filter(CreditCard.is_archived == False)
     return query.order_by(CreditCard.created_at.desc()).all()
@@ -41,7 +45,10 @@ def create_card(
         reward_type=payload.reward_type,
         base_earn_rate=payload.base_earn_rate,
         point_redemption_inr=payload.point_redemption_inr,
-        is_verified=payload.is_verified
+        is_verified=payload.is_verified,
+        category=payload.category,
+        verification_status=payload.verification_status,
+        notes=payload.notes
     )
     db.add(card)
     db.commit()
@@ -54,7 +61,11 @@ def get_card(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    card = db.query(CreditCard).filter(
+    card = db.query(CreditCard).options(
+        joinedload(CreditCard.product_terms).joinedload(CardProductTerms.source_document),
+        joinedload(CreditCard.benefits),
+        joinedload(CreditCard.fees)
+    ).filter(
         CreditCard.id == card_id,
         CreditCard.user_id == current_user.id
     ).first()

@@ -12,12 +12,18 @@ router = APIRouter()
 
 def enrich_statement_response(statement: Statement, db: Session) -> StatementResponse:
     payments = db.query(Payment).filter(Payment.statement_id == statement.id).all()
+    bal = Decimal(str(statement.total_balance)) if statement.total_balance is not None else None
+    min_d = Decimal(str(statement.minimum_due)) if statement.minimum_due is not None else None
     recon = calculate_payment_reconciliation(
-        statement_balance=Decimal(str(statement.total_balance)),
-        minimum_due=Decimal(str(statement.minimum_due)),
+        statement_balance=bal,
+        minimum_due=min_d,
         payments=payments
     )
     res = StatementResponse.model_validate(statement)
+    if statement.card:
+        res.card_name = statement.card.nickname or statement.card.variant
+        res.card_issuer = statement.card.issuer
+        res.masked_number = statement.card.masked_number
     res.confirmed_paid_amount = recon.confirmed_payments_total
     res.planned_paid_amount = recon.planned_payments_total
     res.remaining_to_plan = recon.remaining_to_plan
@@ -36,7 +42,7 @@ def list_statements(
     if is_paid is not None:
         query = query.filter(Statement.is_paid == is_paid)
     
-    statements = query.order_by(Statement.payment_due_date.asc()).all()
+    statements = query.order_by(Statement.payment_due_date.asc().nulls_last()).all()
     return [enrich_statement_response(s, db) for s in statements]
 
 @router.post("", response_model=StatementResponse, status_code=status.HTTP_201_CREATED)
@@ -53,16 +59,21 @@ def create_statement(
     if not card:
         raise HTTPException(status_code=404, detail="Associated credit card not found.")
 
-    # Duplicate detection: statement with same card and statement_date or identical period
-    duplicate = db.query(Statement).filter(
-        Statement.card_id == payload.card_id,
-        Statement.statement_date == payload.statement_date
-    ).first()
-    if duplicate:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A statement for this card and date already exists."
-        )
+    # Duplicate detection: statement with same card and statement_date (if provided)
+    if payload.statement_date:
+        duplicate = db.query(Statement).filter(
+            Statement.card_id == payload.card_id,
+            Statement.statement_date == payload.statement_date
+        ).first()
+        if duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A statement for this card and date already exists."
+            )
+
+    is_credit = False
+    if payload.total_balance is not None and payload.total_balance < 0:
+        is_credit = True
 
     statement = Statement(
         card_id=payload.card_id,
@@ -73,8 +84,11 @@ def create_statement(
         period_end=payload.period_end,
         total_balance=payload.total_balance,
         minimum_due=payload.minimum_due,
+        is_credit_balance=is_credit or payload.is_credit_balance,
+        is_historical=payload.is_historical,
         source=payload.source,
-        document_ref=payload.document_ref
+        document_ref=payload.document_ref,
+        notes=payload.notes
     )
     db.add(statement)
     db.commit()

@@ -7,10 +7,8 @@ from app.models.models import User, CreditCard, Statement, Payment
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
-    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
-    Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture
 def client():
@@ -146,12 +144,26 @@ def test_seed_and_matcher_endpoint(client):
     # Seed the 10 demonstration cards
     seed_res = client.post("/api/v1/auth/seed-demo-data", headers=headers)
     assert seed_res.status_code == 200
-    assert "10 synthetic demonstration cards" in seed_res.json()["message"]
+    assert "10 credit cards" in seed_res.json()["message"]
+    assert seed_res.json()["cards_count"] == 10
+    assert seed_res.json()["statements_count"] == 9
 
     # Verify wallet has 10 cards
     cards_res = client.get("/api/v1/cards", headers=headers)
     assert cards_res.status_code == 200
-    assert len(cards_res.json()) == 10
+    cards_data = cards_res.json()
+    assert len(cards_data) == 10
+
+    # Verify YES Bank ACE is unverified and has negative statement balance
+    stmts_res = client.get("/api/v1/statements", headers=headers)
+    assert stmts_res.status_code == 200
+    stmts_data = stmts_res.json()
+    assert len(stmts_data) == 9
+
+    yes_stmt = next((s for s in stmts_data if s["is_credit_balance"]), None)
+    assert yes_stmt is not None
+    assert float(yes_stmt["total_balance"]) == -1035.0
+    assert float(yes_stmt["remaining_to_plan"]) == 0.0
 
     # Query Smart Card Matcher for Amazon purchase of ₹5,000
     match_res = client.post("/api/v1/matcher/recommend", headers=headers, json={
@@ -171,5 +183,8 @@ def test_seed_and_matcher_endpoint(client):
     # Query Dashboard Summary
     dash_res = client.get("/api/v1/dashboard/summary", headers=headers)
     assert dash_res.status_code == 200
-    assert dash_res.json()["total_cards_count"] == 10
+    summary = dash_res.json()
+    assert summary["total_cards_count"] == 10
+    assert float(summary["total_credit_balances"]) == 1035.0
+    assert float(summary["total_statement_balances"]) > 0.0
 

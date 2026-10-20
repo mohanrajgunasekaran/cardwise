@@ -34,6 +34,10 @@
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                     <span>Card Matcher</span>
                 </button>
+                <button class="nav-item" data-tab="comparison">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"></rect><rect x="14" y="3" width="7" height="18" rx="1"></rect><line x1="6.5" y1="8" x2="6.5" y2="8.01"></line><line x1="17.5" y1="8" x2="17.5" y2="8.01"></line></svg>
+                    <span>Card Comparison</span>
+                </button>
                 <button class="nav-item" data-tab="payments">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
                     <span>Payments & Ledger</span>
@@ -88,11 +92,20 @@
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-header">
-                            <span>Total Statement Balances</span>
+                            <span>Total Payable Balances</span>
                             <div class="metric-icon primary">₹</div>
                         </div>
                         <div class="metric-value" id="metric-statement-balance">₹0.00</div>
-                        <div class="metric-sub">Sum of active non-duplicated statements</div>
+                        <div class="metric-sub">Sum of active payable balances</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span>Credit Balances</span>
+                            <div class="metric-icon credit">₹</div>
+                        </div>
+                        <div class="metric-value" style="color: #059669;" id="metric-credit-balance">₹0.00</div>
+                        <div class="metric-sub">Net surplus (No payment required)</div>
                     </div>
 
                     <div class="metric-card">
@@ -110,7 +123,7 @@
                             <div class="metric-icon primary">⏱</div>
                         </div>
                         <div class="metric-value" id="metric-remaining-plan">₹0.00</div>
-                        <div class="metric-sub">Balance - Confirmed - Planned</div>
+                        <div class="metric-sub">Payable - Confirmed - Planned</div>
                     </div>
 
                     <div class="metric-card">
@@ -193,6 +206,48 @@
                         <div id="matcher-results-list" class="results-list">
                             <div class="empty-state">Select inputs and click "Evaluate Best Card"</div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Card Comparison -->
+            <section id="tab-comparison" class="tab-content">
+                <div class="comparison-container">
+                    <div class="comparison-header-bar">
+                        <div>
+                            <h3>Credit Card Product & Benefit Comparison</h3>
+                            <p class="section-desc">Side-by-side analysis of verified annual fees, rewards, forex markup, lounge access, and official exclusions.</p>
+                        </div>
+                        <div class="comparison-filters">
+                            <label style="font-size: 13px; font-weight: 600; color: var(--slate-700);">Filter by Category:</label>
+                            <select id="comparison-category-filter" style="padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--slate-200); font-size: 13px;">
+                                <option value="ALL">All 10 Cards</option>
+                                <option value="VERIFIED">Verified Variants Only</option>
+                                <option value="UNVERIFIED">Unverified Cards Only</option>
+                                <option value="NO_FEE">Lifetime Free Cards (₹0 Fee)</option>
+                                <option value="LOUNGE">Cards with Lounge Access</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="comparison-table-wrapper">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Card / Issuer</th>
+                                    <th>Variant Status</th>
+                                    <th>Fees (Joining / Annual)</th>
+                                    <th>Fee Waiver Threshold</th>
+                                    <th>Reward Type & Base Rate</th>
+                                    <th>Airport & Railway Lounge</th>
+                                    <th>Forex Markup</th>
+                                    <th>Exclusions & Caps</th>
+                                    <th>Official Source</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparison-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -299,6 +354,19 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">Save Card</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Card Details & Update Modal -->
+    <div id="card-details-modal" class="modal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h3 id="detail-modal-title">Card Details</h3>
+                <button class="close-btn" id="close-details-modal-btn">&times;</button>
+            </div>
+            <div id="card-details-content">
+                <!-- Dynamically populated -->
+            </div>
         </div>
     </div>
 

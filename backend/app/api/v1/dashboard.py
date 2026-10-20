@@ -29,11 +29,30 @@ def get_dashboard_summary(
         Statement.is_paid == False
     ).all()
 
-    total_statement_balances = sum((Decimal(str(s.total_balance)) for s in statements), Decimal("0.00"))
-    total_minimum_due = sum((Decimal(str(s.minimum_due)) for s in statements), Decimal("0.00"))
-    
-    upcoming_deadlines = sum(1 for s in statements if s.payment_due_date >= today)
-    overdue_count = sum(1 for s in statements if s.payment_due_date < today)
+    # Separate payable debts from credit balances (e.g. -₹1,035 credit balance must NEVER be treated as payable debt)
+    total_payable_statement_balances = Decimal("0.00")
+    total_credit_balances = Decimal("0.00")
+    total_minimum_due = Decimal("0.00")
+    upcoming_deadlines = 0
+    overdue_count = 0
+
+    for s in statements:
+        if s.total_balance is not None:
+            bal = Decimal(str(s.total_balance))
+            if bal > Decimal("0.00"):
+                total_payable_statement_balances += bal
+                if s.payment_due_date:
+                    if s.payment_due_date >= today:
+                        upcoming_deadlines += 1
+                    else:
+                        overdue_count += 1
+            elif bal < Decimal("0.00"):
+                total_credit_balances += abs(bal)
+
+        if s.minimum_due is not None:
+            min_d = Decimal(str(s.minimum_due))
+            if min_d > Decimal("0.00"):
+                total_minimum_due += min_d
 
     # Payments reconciliation
     payments = db.query(Payment).filter(Payment.user_id == current_user.id).all()
@@ -47,12 +66,13 @@ def get_dashboard_summary(
         elif p.status in ("PLANNED", "SUBMITTED"):
             planned_payment_total += amt
 
-    remaining_unplanned = total_statement_balances - confirmed_payment_total - planned_payment_total
+    remaining_unplanned = total_payable_statement_balances - confirmed_payment_total - planned_payment_total
     if remaining_unplanned < Decimal("0.00"):
         remaining_unplanned = Decimal("0.00")
 
     return HomeDashboardSummary(
-        total_statement_balances=total_statement_balances,
+        total_statement_balances=total_payable_statement_balances,
+        total_credit_balances=total_credit_balances,
         total_minimum_due=total_minimum_due,
         upcoming_deadlines_count=upcoming_deadlines,
         overdue_count=overdue_count,

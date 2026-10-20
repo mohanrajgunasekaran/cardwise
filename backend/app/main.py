@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.session import engine, Base
-from app.api.v1 import auth, cards, statements, payments, matcher, offers, dashboard
+from app.api.v1 import auth, cards, statements, payments, matcher, offers, dashboard, documents
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
@@ -33,6 +33,7 @@ app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", ta
 app.include_router(matcher.router, prefix=f"{settings.API_V1_STR}/matcher", tags=["Smart Card Matcher"])
 app.include_router(offers.router, prefix=f"{settings.API_V1_STR}/offers", tags=["Offers & Rewards"])
 app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard"])
+app.include_router(documents.router, prefix=f"{settings.API_V1_STR}/documents", tags=["Official Documents"])
 
 # Mount static web client assets
 static_dir = os.path.join(os.path.dirname(__file__), "static")
