@@ -1,19 +1,8 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/app/main.py",
-      "use": "@vercel/python"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "index.py": {
+      "includeFiles": "backend/app/static/**"
     }
-  ],
-  "routes": [
-    {
-      "src": "/static/(.*)",
-      "dest": "backend/app/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "backend/app/main.py"
-    }
-  ]
+  }
 }
