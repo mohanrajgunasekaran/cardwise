@@ -23,8 +23,8 @@ CardWise is a production-oriented personal finance management application tailor
      4. HDFC Bank credit card (Variant unknown, unverified)
      5. RBL Bank Shoprite
      6. AU Small Finance Bank LIT
-     7. IndusInd Bank ending 7207
-     8. IndusInd Bank ending 8377
+     7. IndusInd Bank
+     8. IndusInd Bank
      9. IDFC FIRST Bank LIC Select
      10. RBL Bank LazyPay
 
